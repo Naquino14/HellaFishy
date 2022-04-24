@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "HellaFishy debug": {
+      "commandName": "Project",
+      "commandLineArgs": "\"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\""
+    }
+  }
+}
