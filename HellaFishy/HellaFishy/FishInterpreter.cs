@@ -8,7 +8,6 @@ namespace HellaFishy
 {
     public class FishInterpreter
     {
-        
         public static void Main(string[] args)
         {
             char[][] codeBox;
@@ -32,7 +31,8 @@ namespace HellaFishy
                 throw new ArgumentException("No file specified.");
         }
 
-        static List<byte> stack = new();
+        static List<int> stack = new();
+        static List<List<int>> coStacks = new();
         static byte? register;
 
         public static string Interpret(in char[][] codeBox) // TODO: GUI?
@@ -57,6 +57,7 @@ namespace HellaFishy
                     switch (ins)
                     {
                         #region movement
+                        
                         case ' ':
                             continue;
                         case '^':
@@ -115,8 +116,8 @@ namespace HellaFishy
                             pointer.y = pointer.d switch { '^' => pointer.y - 1, 'v' => pointer.y + 1, _ => pointer.y };
                             break;
                         case '?':
-                            byte p = PopGet();
-                            if (p != 0x0)
+                            int p = PopGet();
+                            if (p != 0)
                                 continue;
                             pointer.x = pointer.d switch { '<' => pointer.x - 1, '>' => pointer.x + 1, _ => pointer.x };
                             pointer.y = pointer.d switch { '^' => pointer.y - 1, 'v' => pointer.y + 1, _ => pointer.y };
@@ -125,15 +126,78 @@ namespace HellaFishy
                             pointer.x = PopGet();
                             pointer.y = PopGet();
                             break;
-                        #endregion
-
-                        #region literals and operators
-
-                        // TODO: this
 
                         #endregion
 
-                        #region reflection and misc
+                        #region Literals and operators
+
+                        // todo
+
+                        #endregion
+
+                        #region Stack manipulation
+
+                        case ':':
+                            try
+                            { Push(stack.Last()); }
+                            catch (InvalidOperationException)
+                            { throw new FishyException("Could not dupe the top value, the stack was empty."); }
+                            break;
+                        case '~':
+                            Pop();
+                            break;
+                        case '$':
+                            if (stack.Count < 2)
+                                throw new FishyException("Stack does not contain enough elements to execute this instruction.");
+                            var tmp = stack.Last();
+                            stack[^1] = stack[^2]; // oh my god LMAOOO
+                            stack[^2] = tmp;
+                            break;
+                        case '@':
+                            if (stack.Count < 3)
+                                throw new FishyException("Stack does not contain enough elements to execute this instruction.");
+                            var tmp1 = stack.Last();
+                            stack[^1] = stack[^3];
+                            stack[^2] = stack[^3];
+                            stack[^3] = tmp1;
+                            break;
+                        case '}':
+                            if (stack.Count == 0)
+                                throw new FishyException("Could not shift stack, the stack was empty.");
+                            stack = stack.Skip(stack.Count - 1).Concat(stack.Take(stack.Count - 1)).ToList();
+                            break;
+                        case '{':
+                            if (stack.Count == 0)
+                                throw new FishyException("Could not shift stack, the stack was empty.");
+                            stack = stack.Skip(1).Concat(stack.Take(1)).ToList();
+                            break;
+                        case 'r': // TODO: test
+                            if (stack.Count == 0)
+                                throw new FishyException("Could not reverse stack, the stack was empty.");
+                            if (coStacks.Count == 0)
+                                stack.Reverse();
+                            else
+                                coStacks.Last().Reverse();
+                            break;
+                        case 'l':
+                            Push(stack.Count);
+                            break;
+                        case '[': // TODO: test
+                            int c = PopGet();
+                            coStacks.Add(new());
+                            for (int i = 0; i < c; i++)
+                                coStacks.Last().Add(stack[^i]);
+                            break;
+                        case ']': // TODO: test
+                            if (coStacks.Count == 0)
+                                throw new FishyException("Could not push costack, the costacks list was empty.");
+                            foreach (var i in coStacks.Last())
+                                stack.Add(i);
+                            break;
+
+                        #endregion
+
+                        #region Reflection and misc
                         case ';':
                             return res;
                         default:
@@ -142,7 +206,6 @@ namespace HellaFishy
                     }
 
                     // move the pointer
-
 
                     // translate the pointer in-bounds
                     pointer.x %= codeBox.Length;
@@ -160,21 +223,27 @@ namespace HellaFishy
             throw new NotImplementedException();
         }
 
-        static byte PopGet()
+        static int PopGet()
         {
             try
-            { return stack.First(); }
-            catch (InvalidOperationException u)
+            {
+                int l = stack.Last();
+                Pop();
+                return l;  
+            }
+            catch (InvalidOperationException)
             { throw new FishyException(); }
         }
 
         static void Pop()
         {
             try
-            { stack.RemoveAt(0); }
-            catch (ArgumentOutOfRangeException u)
+            { stack.RemoveAt(stack.Count - 1); }
+            catch (ArgumentOutOfRangeException)
             { throw new FishyException(); }
         }
+
+        static void Push(int b) => stack.Insert(0, b);
 
         public class FishyException : Exception
         {
