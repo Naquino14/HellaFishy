@@ -40,7 +40,7 @@ namespace HellaFishy
 
         static List<float> stack = new();
         static List<List<float>> coStacks = new();
-        static byte? register;
+        static float? register;
         static List<char> stdin = new();
 
         public static string Interpret(in char[][] codeBox, in string? inp) // TODO: GUI?
@@ -48,16 +48,16 @@ namespace HellaFishy
             // https://esolangs.org/wiki/Fish
 
             // x coord, y coord, direction (can be ^,v,<,> ). direction defaults to the right
-            (int x, int y, char d) pointer = new(0, 0, 'r');
+            (int x, int y, char d) pointer = new(0, 0, '>');
 
             bool stopFlag = false;
             string res = "";
             bool sPush = false;
 
             Random rand = new();
-            char ins = codeBox[pointer.x][pointer.y];
+            char ins = codeBox[pointer.x][pointer.y]; // TODO!!!! FIX THIS CRAP. x and y are reversed.
 
-            if (inp is not null)
+            if (inp!.Length != 0)
             { stdin = inp.ToCharArray().ToList(); stdin.Reverse(); }
 
             try
@@ -73,7 +73,7 @@ namespace HellaFishy
                             #region movement
 
                             case ' ':
-                                continue;
+                                break;
                             case '^':
                                 pointer.d = ins;
                                 break;
@@ -275,6 +275,28 @@ namespace HellaFishy
                                 
                             #region Reflection and misc
 
+                            case '&':
+                                if (register is null && stack.Count == 0)
+                                    throw new FishyException(sueEx);
+                                else if (register is not null)
+                                {
+                                    Push((float)register);
+                                    register = null;
+                                }
+                                else
+                                    Push(PopGet());
+                                break;
+                            case 'g':
+                                if (stack.Count < 2)
+                                    throw new FishyException(su2Ex);
+                                var g = codeBox[(int)PopGet()][(int)PopGet()];
+                                Push(g == ' ' ? 0 : g);
+                                break;
+                            case 'p':
+                                if (stack.Count < 3)
+                                    throw new FishyException(su2Ex);
+                                Push(codeBox[(int)PopGet()][(int)PopGet()] = (char)PopGet());
+                                break;
                             case ';':
                                 return res;
                             default:
@@ -292,12 +314,17 @@ namespace HellaFishy
                         sPush = false;
 
                     // move the pointer
+                    pointer.x = pointer.d switch { '<' => pointer.x - 1, '>' => pointer.x + 1, _ => pointer.x };
+                    pointer.y = pointer.d switch { '^' => pointer.y - 1, 'v' => pointer.y + 1, _ => pointer.y };
 
                     // translate the pointer in-bounds
                     pointer.x %= codeBox.Length;
                     pointer.y %= codeBox[0].Length;
                 }
-            } catch (FishyException f)
+            } 
+            catch (IndexOutOfRangeException)
+            { throw new FishyException("Coordinates were outside of the codebox."); }
+            catch (FishyException f)
             {
                 return $"Something smells fishy!\nError parsing instruction at " +
                                 $"({pointer.x}, {pointer.y})=>" +
