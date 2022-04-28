@@ -27,9 +27,9 @@ namespace HellaFishy
                     for (int i = 0; i < rows.Length; i++)
                         codeBox[i] = rows[i].ToCharArray();
                     c.WriteLine("Enter stdin string (optional): ");
-                    string? stdin = null; //c.ReadLine();
-                    delayMs = int.Parse(args[1]);
-                    c.Write($"Output: {Interpret(codeBox, stdin, args.Length > 1 ? Math.Abs(int.Parse(args[1])) : 0)}");
+                    string? stdin = c.ReadLine();
+                    c.CursorVisible = false;
+                    c.Write($"Output: {Interpret(codeBox, stdin, args.Length > 1 ? Math.Abs(int.Parse(args[1])) : 0)}\n");
                     return;
                 }
                 else
@@ -51,8 +51,6 @@ namespace HellaFishy
             }
         }
 
-        static int delayMs = 0;
-
         static List<float> stack = new();
         static List<List<float>> coStacks = new();
         static float? register;
@@ -60,7 +58,7 @@ namespace HellaFishy
 
         private static void Draw(in char[][] codeBox, Pointer p)
         {
-            c.Clear();
+            c.SetCursorPosition(0,0);
             for (int i = 0; i < codeBox.Length; i++)
             {
                 for (int j = 0; j < codeBox[i].Length; j++)
@@ -69,12 +67,15 @@ namespace HellaFishy
                     c.ForegroundColor = i == p.y && j == p.x ? ConsoleColor.Black : ConsoleColor.White;
                     c.Write(codeBox[i][j]);
                 }
+                c.BackgroundColor = ConsoleColor.Black;
+                c.ForegroundColor = ConsoleColor.White;
                 c.WriteLine();
             }
 
             c.WriteLine($"\nRegistry: {register}");
             
             c.Write("\nStack: ");
+            ClearLine();
             foreach (var item in stack)
                 c.Write(item + " ");
             c.WriteLine();
@@ -82,12 +83,21 @@ namespace HellaFishy
             c.WriteLine("\nCoStacks: ");
             for (int i = 0; i < coStacks.Count; i++)
             {
+                ClearLine();
                 c.Write("CoStack " + i + ": ");
                 foreach (var item in coStacks[i])
                     c.Write($"{item} ");
                 c.WriteLine();
             }
             c.WriteLine("\n============================================================\n");
+        }
+
+        private static void ClearLine()
+        {
+            int prev = c.CursorTop;
+            c.SetCursorPosition(0, c.CursorTop);
+            c.Write(new string(' ', c.WindowWidth));
+            c.SetCursorPosition(0, prev);
         }
 
         public static string Interpret(in char[][] codeBox, in string? inp, int delayMs) // TODO: GUI?
@@ -108,7 +118,8 @@ namespace HellaFishy
             { stdin = inp.ToCharArray().ToList(); stdin.Reverse(); }
 
             c.Clear();
-            Draw(codeBox, pointer);
+            if (delayMs > 0)
+                Draw(codeBox, pointer);
 
             try
             {
@@ -182,7 +193,7 @@ namespace HellaFishy
                             case '?':
                                 var p = PopGet();
                                 if (p != 0)
-                                    continue;
+                                    break;
                                 pointer.x = pointer.d switch { '<' => pointer.x - 1, '>' => pointer.x + 1, _ => pointer.x };
                                 pointer.y = pointer.d switch { '^' => pointer.y - 1, 'v' => pointer.y + 1, _ => pointer.y };
                                 break;
@@ -334,7 +345,7 @@ namespace HellaFishy
                                     register = null;
                                 }
                                 else
-                                    Push(PopGet());
+                                    register = PopGet();
                                 break;
                             case 'g':
                                 if (stack.Count < 2)
@@ -376,8 +387,8 @@ namespace HellaFishy
                     pointer.y = pointer.d switch { '^' => pointer.y - 1, 'v' => pointer.y + 1, _ => pointer.y };
 
                     // translate the pointer in-bounds
-                    pointer.y %= codeBox.Length;
-                    pointer.x %= codeBox[0].Length;
+                    pointer.y = pointer.y < 0 ? codeBox.Length + pointer.y : pointer.y % codeBox.Length;
+                    pointer.x = pointer.x < 0 ? codeBox[0].Length + pointer.x : pointer.x % codeBox[0].Length;
 
                     if (delayMs > 0)
                     {
@@ -420,7 +431,7 @@ namespace HellaFishy
             { throw new FishyException(); }
         }
 
-        static void Push(float e) => stack.Insert(0, e); // keeps falling out to here????
+        static void Push(float e) => stack.Add(e); // keeps falling out to here????
 
         public class FishyException : Exception
         {

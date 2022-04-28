@@ -1,6 +1,14 @@
 {
   "profiles": {
-    "HellaFishy debug": {
+    "HellaFishy nodraw": {
+      "commandName": "Project",
+      "commandLineArgs": "\"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\""
+    },
+    "HellaFishy Fast": {
+      "commandName": "Project",
+      "commandLineArgs": "\"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\" 100"
+    },
+    "HellaFishy Slow": {
       "commandName": "Project",
       "commandLineArgs": "\"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\" 500"
     }
