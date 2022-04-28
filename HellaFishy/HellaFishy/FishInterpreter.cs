@@ -27,8 +27,9 @@ namespace HellaFishy
                     for (int i = 0; i < rows.Length; i++)
                         codeBox[i] = rows[i].ToCharArray();
                     c.WriteLine("Enter stdin string (optional): ");
-                    var stdin = c.ReadLine();
-                    c.Write(Interpret(codeBox, stdin));
+                    string? stdin = null; //c.ReadLine();
+                    delayMs = int.Parse(args[1]);
+                    c.Write($"Output: {Interpret(codeBox, stdin, args.Length > 1 ? Math.Abs(int.Parse(args[1])) : 0)}");
                     return;
                 }
                 else
@@ -38,33 +39,82 @@ namespace HellaFishy
                 throw new ArgumentException("No file specified.");
         }
 
+        class Pointer
+        {
+            public int x, y;
+            public char d;
+            public Pointer(int x, int y, char d)
+            {
+                this.x = x;
+                this.y = y;
+                this.d = d;
+            }
+        }
+
+        static int delayMs = 0;
+
         static List<float> stack = new();
         static List<List<float>> coStacks = new();
         static float? register;
         static List<char> stdin = new();
 
-        public static string Interpret(in char[][] codeBox, in string? inp) // TODO: GUI?
+        private static void Draw(in char[][] codeBox, Pointer p)
+        {
+            c.Clear();
+            for (int i = 0; i < codeBox.Length; i++)
+            {
+                for (int j = 0; j < codeBox[i].Length; j++)
+                {
+                    c.BackgroundColor = i == p.y && j == p.x ? ConsoleColor.Green : ConsoleColor.Black;
+                    c.ForegroundColor = i == p.y && j == p.x ? ConsoleColor.Black : ConsoleColor.White;
+                    c.Write(codeBox[i][j]);
+                }
+                c.WriteLine();
+            }
+
+            c.WriteLine($"\nRegistry: {register}");
+            
+            c.Write("\nStack: ");
+            foreach (var item in stack)
+                c.Write(item + " ");
+            c.WriteLine();
+
+            c.WriteLine("\nCoStacks: ");
+            for (int i = 0; i < coStacks.Count; i++)
+            {
+                c.Write("CoStack " + i + ": ");
+                foreach (var item in coStacks[i])
+                    c.Write($"{item} ");
+                c.WriteLine();
+            }
+            c.WriteLine("\n============================================================\n");
+        }
+
+        public static string Interpret(in char[][] codeBox, in string? inp, int delayMs) // TODO: GUI?
         {
             // https://esolangs.org/wiki/Fish
 
             // x coord, y coord, direction (can be ^,v,<,> ). direction defaults to the right
-            (int x, int y, char d) pointer = new(0, 0, '>');
+            Pointer pointer = new(0, 0, '>');
 
             bool stopFlag = false;
             string res = "";
             bool sPush = false;
 
             Random rand = new();
-            char ins = codeBox[pointer.x][pointer.y]; // TODO!!!! FIX THIS CRAP. x and y are reversed.
+            char ins = codeBox[pointer.y][pointer.x]; // TODO!!!! FIX THIS CRAP. x and y are reversed.
 
-            if (inp!.Length != 0)
+            if (inp is not null && inp!.Length != 0)
             { stdin = inp.ToCharArray().ToList(); stdin.Reverse(); }
+
+            c.Clear();
+            Draw(codeBox, pointer);
 
             try
             {
                 while (!stopFlag)
                 {
-                    ins = codeBox[pointer.x][pointer.y];
+                    ins = codeBox[pointer.y][pointer.x];
                     // execute instruction
                     if (!sPush)
                     {
@@ -259,7 +309,7 @@ namespace HellaFishy
                             #region Input/output
 
                             case 'o':
-                                res += BitConverter.ToChar(new byte[] { (byte)PopGet() });
+                                res += (char)PopGet();
                                 break;
                             case 'n': // todo test if whole numbers return decimals
                                 res += PopGet();
@@ -270,9 +320,9 @@ namespace HellaFishy
                                 Push(stdin.First());
                                 stdin.RemoveAt(0);
                                 break;
-                                
+
                             #endregion
-                                
+
                             #region Reflection and misc
 
                             case '&':
@@ -289,13 +339,21 @@ namespace HellaFishy
                             case 'g':
                                 if (stack.Count < 2)
                                     throw new FishyException(su2Ex);
-                                var g = codeBox[(int)PopGet()][(int)PopGet()];
-                                Push(g == ' ' ? 0 : g);
+                                {
+                                    int x = (int)PopGet(),
+                                        y = (int)PopGet();
+                                    var g = codeBox[y][x];
+                                    Push(g == ' ' ? 0 : g);
+                                }
                                 break;
                             case 'p':
                                 if (stack.Count < 3)
                                     throw new FishyException(su2Ex);
-                                Push(codeBox[(int)PopGet()][(int)PopGet()] = (char)PopGet());
+                                {
+                                    int x = (int)PopGet(),
+                                        y = (int)PopGet();
+                                    Push(codeBox[y][x] = (char)PopGet());
+                                }
                                 break;
                             case ';':
                                 return res;
@@ -304,22 +362,28 @@ namespace HellaFishy
                                 { Push(b); break; }
                                 else
                                     throw new FishyException();
-                                
+
                             #endregion
                         }
                     }
-                    else if (ins != '"' || ins != '\'')// pushing every char as a string
-                        Push(ins);
-                    else
+                    else if (ins == '"' || ins == '\'')// pushing every char as a string
                         sPush = false;
+                    else
+                        Push(ins);
 
                     // move the pointer
                     pointer.x = pointer.d switch { '<' => pointer.x - 1, '>' => pointer.x + 1, _ => pointer.x };
                     pointer.y = pointer.d switch { '^' => pointer.y - 1, 'v' => pointer.y + 1, _ => pointer.y };
 
                     // translate the pointer in-bounds
-                    pointer.x %= codeBox.Length;
-                    pointer.y %= codeBox[0].Length;
+                    pointer.y %= codeBox.Length;
+                    pointer.x %= codeBox[0].Length;
+
+                    if (delayMs > 0)
+                    {
+                        Draw(codeBox, pointer);
+                        Thread.Sleep(delayMs);
+                    }
                 }
             } 
             catch (IndexOutOfRangeException)
@@ -356,7 +420,7 @@ namespace HellaFishy
             { throw new FishyException(); }
         }
 
-        static void Push(float e) => stack.Insert(0, e);
+        static void Push(float e) => stack.Insert(0, e); // keeps falling out to here????
 
         public class FishyException : Exception
         {

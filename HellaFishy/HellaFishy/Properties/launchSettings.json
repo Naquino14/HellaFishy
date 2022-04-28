@@ -2,7 +2,7 @@
   "profiles": {
     "HellaFishy debug": {
       "commandName": "Project",
-      "commandLineArgs": "\"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\""
+      "commandLineArgs": "\"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\" 500"
     }
   }
 }
