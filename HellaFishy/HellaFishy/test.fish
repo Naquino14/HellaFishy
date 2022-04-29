@@ -1,1 +1,3 @@
-12345 3[  r  ]  rnnnnn;
+"hello, world"r\
+         /o;!?l<
+         >     /

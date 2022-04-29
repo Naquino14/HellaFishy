@@ -6,11 +6,35 @@
     },
     "HellaFishy Fast": {
       "commandName": "Project",
-      "commandLineArgs": "\"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\" 100"
+      "commandLineArgs": "-d 100 \"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\""
     },
     "HellaFishy Slow": {
       "commandName": "Project",
-      "commandLineArgs": "\"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\" 500"
+      "commandLineArgs": "-d 500 \"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\""
+    },
+    "HellaFishy Super Fast": {
+      "commandName": "Project",
+      "commandLineArgs": "-d 50 \"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\""
+    },
+    "HellaFishy break mode": {
+      "commandName": "Project",
+      "commandLineArgs": "-b \"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\""
+    },
+    "HellaFishy no stdin": {
+      "commandName": "Project",
+      "commandLineArgs": "-s \"\" \"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\""
+    },
+    "HellaFishy break no stdin": {
+      "commandName": "Project",
+      "commandLineArgs": "-b -s \"\" \"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\""
+    },
+    "HellaFishy help": {
+      "commandName": "Project",
+      "commandLineArgs": "-help"
+    },
+    "HellaFishy Super Fast no stdin": {
+      "commandName": "Project",
+      "commandLineArgs": "-d 50 -s \"\" \"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\""
     }
   }
 }

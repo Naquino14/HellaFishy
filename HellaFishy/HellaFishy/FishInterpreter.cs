@@ -1,5 +1,4 @@
-﻿// but what if I like the boilerplate stuff :(
-#pragma bruhhhhh
+﻿#pragma success!!!!
 
 using System;
 using c = System.Console;
@@ -12,53 +11,20 @@ namespace HellaFishy
         static readonly string su2Ex = "Stack does not contain enough elements to execute this instruction.",
             sueEx = "The stack was empty.";
         #endregion
-
-        public static void Main(string[] args)
-        {
-            char[][] codeBox;
-            // ok ig stage 1 is to actually read the file...
-            if (args is not null && args.Length != 0)
-            {
-                if (new FileInfo(args[0]).Name.Contains(".fish"))
-                {
-                    // setup rows and columns
-                    var rows = File.ReadAllLines(args[0]);
-                    codeBox = new char[rows.Length][];
-                    for (int i = 0; i < rows.Length; i++)
-                        codeBox[i] = rows[i].ToCharArray();
-                    c.WriteLine("Enter stdin string (optional): ");
-                    string? stdin = c.ReadLine();
-                    c.CursorVisible = false;
-                    c.Write($"Output: {Interpret(codeBox, stdin, args.Length > 1 ? Math.Abs(int.Parse(args[1])) : 0)}\n");
-                    return;
-                }
-                else
-                    throw new InvalidDataException("File is not a fish file.");
-            }
-            else
-                throw new ArgumentException("No file specified.");
-        }
-
-        class Pointer
-        {
-            public int x, y;
-            public char d;
-            public Pointer(int x, int y, char d)
-            {
-                this.x = x;
-                this.y = y;
-                this.d = d;
-            }
-        }
-
+        
         static List<float> stack = new();
         static List<List<float>> coStacks = new();
+
         static float? register;
+        static List<float?> coRegistries = new();
+
         static List<char> stdin = new();
 
-        private static void Draw(in char[][] codeBox, Pointer p)
+        static bool contiinue = false;
+
+        private static void Draw(in char[][] codeBox, Pointer p, bool enableStep)
         {
-            c.SetCursorPosition(0,0);
+            c.SetCursorPosition(0, 0);
             for (int i = 0; i < codeBox.Length; i++)
             {
                 for (int j = 0; j < codeBox[i].Length; j++)
@@ -71,11 +37,11 @@ namespace HellaFishy
                 c.ForegroundColor = ConsoleColor.White;
                 c.WriteLine();
             }
+            c.WriteLine();
+            ;
 
-            c.WriteLine($"\nRegistry: {register}");
-            
-            c.Write("\nStack: ");
             ClearLine();
+            c.Write("Stack: ");
             foreach (var item in stack)
                 c.Write(item + " ");
             c.WriteLine();
@@ -89,7 +55,29 @@ namespace HellaFishy
                     c.Write($"{item} ");
                 c.WriteLine();
             }
+
+            c.WriteLine($"\nRegistry: {register}");
+
+            c.WriteLine("\nCoRegistries: ");
+            for (int i = 0; i < coRegistries.Count; i++)
+            {
+                ClearLine();
+                c.Write("CoRegistry " + i + ": ");
+                c.Write(coRegistries[i] + " ");
+                c.WriteLine();
+            }
             c.WriteLine("\n============================================================\n");
+            if (enableStep && !contiinue)
+            { 
+                c.Write("Press any key to step... Press c to continue.");
+                if (c.ReadKey().KeyChar == 'c')
+                    contiinue = true;
+            }
+            if (enableStep && contiinue)
+            {
+                ClearLine();
+                c.Write("Press any key to step... Press c to continue.");
+            }
         }
 
         private static void ClearLine()
@@ -100,7 +88,7 @@ namespace HellaFishy
             c.SetCursorPosition(0, prev);
         }
 
-        public static string Interpret(in char[][] codeBox, in string? inp, int delayMs) // TODO: GUI?
+        public static string Interpret(in char[][] codeBox, in string? inp, int delayMs, bool enableStep) // TODO: GUI?
         {
             // https://esolangs.org/wiki/Fish
 
@@ -119,7 +107,7 @@ namespace HellaFishy
 
             c.Clear();
             if (delayMs > 0)
-                Draw(codeBox, pointer);
+                Draw(codeBox, pointer, enableStep);
 
             try
             {
@@ -304,13 +292,15 @@ namespace HellaFishy
                                 break;
                             case '[': // TODO: test
                                 int c = (int)PopGet();
+                                if (stack.Count < c)
+                                    throw new FishyException("Stack did not contain enough elements to perform this instruction.");
                                 coStacks.Add(new());
                                 for (int i = 0; i < c; i++)
                                     coStacks.Last().Add(stack[^i]);
                                 break;
                             case ']': // TODO: test
                                 if (coStacks.Count == 0)
-                                    throw new FishyException("Could not push costack, the costacks list was empty.");
+                                    throw new FishyException("Could not push costack, the costacks list was empty."); // todo: change this to clear stack and register
                                 foreach (var i in coStacks.Last())
                                     stack.Add(i);
                                 break;
@@ -327,7 +317,7 @@ namespace HellaFishy
                                 break;
                             case 'i':
                                 if (stdin.Count == 0)
-                                    throw new FishyException("Stdin was empty.");
+                                { Push(-1); break; }
                                 Push(stdin.First());
                                 stdin.RemoveAt(0);
                                 break;
@@ -374,7 +364,7 @@ namespace HellaFishy
                                 else
                                     throw new FishyException();
 
-                            #endregion
+                                #endregion
                         }
                     }
                     else if (ins == '"' || ins == '\'')// pushing every char as a string
@@ -392,11 +382,11 @@ namespace HellaFishy
 
                     if (delayMs > 0)
                     {
-                        Draw(codeBox, pointer);
+                        Draw(codeBox, pointer, enableStep);
                         Thread.Sleep(delayMs);
                     }
                 }
-            } 
+            }
             catch (IndexOutOfRangeException)
             { throw new FishyException("Coordinates were outside of the codebox."); }
             catch (FishyException f)
@@ -406,7 +396,7 @@ namespace HellaFishy
                                 $"{pointer.d switch { '^' => "up", 'v' => "down", '<' => "left", '>' => "right", _ => "right" }}" +
                                 $" | instruction: \"{ins}\".\n{f}";
             }
-            
+
             // TODO:
             throw new NotImplementedException();
         }
@@ -417,7 +407,7 @@ namespace HellaFishy
             {
                 float l = stack.Last();
                 Pop();
-                return l;  
+                return l;
             }
             catch (InvalidOperationException)
             { throw new FishyException(); }
