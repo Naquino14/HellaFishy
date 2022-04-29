@@ -13,41 +13,7 @@ namespace HellaFishy
             char[][] codeBox;
             // ok ig stage 1 is to actually read the file...
 
-            // handle arguments
-            int stepSpeed = 0;
-            bool enableStep = false;
-            string? stdin = null;
-
-            bool argSkipFlag = false;
-
-            for (int i = 0; i < args.Length; i++)
-            {
-                try
-                {
-                    if (argSkipFlag)
-                    { argSkipFlag = !argSkipFlag; continue; }
-                    if (args is null || args[0] == "" || args[i] == "-help")
-                    {
-                        c.WriteLine("usage: HellaFishy [-d visual_enable_set_speed_ms] [-b (break_mode)] [-s stdin] file");
-                        return;
-                    }
-                    else if (args[i] == "-d")
-                    {
-                        argSkipFlag = true;
-                        stepSpeed = Math.Abs(int.Parse(args[i + 1]));
-                    }
-                    else if (args[i] == "-s")
-                    {
-                        argSkipFlag = true;
-                        stdin = args[i + 1];
-                    }
-                    else if (args[i] == "-b")
-                        enableStep = true;
-                    else
-                        argSkipFlag = true;
-                } catch (Exception)
-                { c.WriteLine("usage: HellaFishy [-d visual_enable_set_speed_ms] [-b (break_mode)] [-s stdin] file"); }
-            }
+            HandleArgs(args, out var stepSpeed, out var enableStep, out var stdin);
 
             c.Clear();
             c.CursorVisible = true;
@@ -77,5 +43,43 @@ namespace HellaFishy
                 throw new ArgumentException("No file specified.");
         }
 
+        private static void HandleArgs(in string[] args, out int stepSpeed, out bool enableStep, out string? stdin)
+        {
+            stepSpeed = 0;
+            enableStep = false;
+            stdin = null;
+
+            bool argSkipFlag = false;
+
+            for (int i = 0; i < args.Length; i++)
+            {
+                try
+                {
+                    if (argSkipFlag)
+                    { argSkipFlag = !argSkipFlag; continue; }
+                    if (args is null || args[0] == "" || args[i] == "-help")
+                    {
+                        c.WriteLine("usage: HellaFishy [-d visual_enable_set_speed_ms] [-b (break_mode)] [-s stdin] file");
+                        return;
+                    }
+                    else if (args[i] == "-d")
+                    {
+                        argSkipFlag = true;
+                        stepSpeed = Math.Abs(int.Parse(args[i + 1]));
+                    }
+                    else if (args[i] == "-s")
+                    {
+                        argSkipFlag = true;
+                        stdin = args[i + 1];
+                    }
+                    else if (args[i] == "-b")
+                        enableStep = true;
+                    else
+                        argSkipFlag = true;
+                }
+                catch (Exception)
+                { c.WriteLine("usage: HellaFishy [-d visual_enable_set_speed_ms] [-b (break_mode)] [-s stdin] file"); }
+            }
+        }
     }
 }

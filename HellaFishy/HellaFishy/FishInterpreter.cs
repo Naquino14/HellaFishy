@@ -38,7 +38,6 @@ namespace HellaFishy
                 c.WriteLine();
             }
             c.WriteLine();
-            ;
 
             ClearLine();
             c.Write("Stack: ");
