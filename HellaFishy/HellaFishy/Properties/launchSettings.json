@@ -35,6 +35,10 @@
     "HellaFishy Super Fast no stdin": {
       "commandName": "Project",
       "commandLineArgs": "-d 50 -s \"\" \"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\""
+    },
+    "HellaFishy 'r' test break": {
+      "commandName": "Project",
+      "commandLineArgs": "-d 1 -c r -s \"\" \"D:\\CSharp Projects\\HellaFishy\\HellaFishy\\HellaFishy\\test.fish\""
     }
   }
 }

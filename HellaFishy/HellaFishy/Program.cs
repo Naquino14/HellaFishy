@@ -13,8 +13,10 @@ namespace HellaFishy
             char[][] codeBox;
             // ok ig stage 1 is to actually read the file...
 
-            HandleArgs(args, out var stepSpeed, out var enableStep, out var stdin);
-
+            var exit = HandleArgs(args, out var stepSpeed, out var enableStep, out var stdin, out var breakInst);
+            if (exit)
+                return;
+            
             c.Clear();
             c.CursorVisible = true;
             if (args is not null && args.Length != 0)
@@ -32,8 +34,8 @@ namespace HellaFishy
                         stdin = c.ReadLine();
                     }
                     c.CursorVisible = false;
-                    c.Write($"{(enableStep ? "\n\n" : "")}" +
-                        $"Output: {FishInterpreter.Interpret(codeBox, stdin, enableStep ? 1 : stepSpeed, enableStep)}\n");
+                    c.Write($"{(enableStep || breakInst is not null ? "\n\n" : "")}" +
+                        $"Output: {FishInterpreter.Interpret(codeBox, stdin, enableStep ? 1 : stepSpeed, enableStep, breakInst)}\n");
                     return;
                 }
                 else
@@ -43,11 +45,12 @@ namespace HellaFishy
                 throw new ArgumentException("No file specified.");
         }
 
-        private static void HandleArgs(in string[] args, out int stepSpeed, out bool enableStep, out string? stdin)
+        private static bool HandleArgs(in string[] args, out int stepSpeed, out bool enableStep, out string? stdin, out char? breakChar)
         {
             stepSpeed = 0;
             enableStep = false;
             stdin = null;
+            breakChar = null;
 
             bool argSkipFlag = false;
 
@@ -59,8 +62,8 @@ namespace HellaFishy
                     { argSkipFlag = !argSkipFlag; continue; }
                     if (args is null || args[0] == "" || args[i] == "-help")
                     {
-                        c.WriteLine("usage: HellaFishy [-d visual_enable_set_speed_ms] [-b (break_mode)] [-s stdin] file");
-                        return;
+                        c.WriteLine("usage: HellaFishy [-d visual_enable_set_speed_ms] [-b (break_mode)] [-c break_mode_char] [-s stdin] file");
+                        return true;
                     }
                     else if (args[i] == "-d")
                     {
@@ -74,12 +77,18 @@ namespace HellaFishy
                     }
                     else if (args[i] == "-b")
                         enableStep = true;
+                    else if (args[i] == "-c")
+                    {
+                        argSkipFlag = true;
+                        breakChar = args[i + 1][0];
+                    }
                     else
                         argSkipFlag = true;
                 }
                 catch (Exception)
-                { c.WriteLine("usage: HellaFishy [-d visual_enable_set_speed_ms] [-b (break_mode)] [-s stdin] file"); }
+                { c.WriteLine("usage: HellaFishy [-d visual_enable_set_speed_ms] [-b (break_mode)] [-c break_mode_char] [-s stdin] file"); }
             }
+            return false;
         }
     }
 }

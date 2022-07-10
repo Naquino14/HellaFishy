@@ -22,7 +22,7 @@ namespace HellaFishy
 
         static bool contiinue = false;
 
-        private static void Draw(in char[][] codeBox, Pointer p, bool enableStep)
+        private static void Draw(in char[][] codeBox, Pointer p, ref bool enableStep, char inst, ref char? breakInst)
         {
             c.SetCursorPosition(0, 0);
             for (int i = 0; i < codeBox.Length; i++)
@@ -67,19 +67,44 @@ namespace HellaFishy
             }
             c.WriteLine("\n============================================================\n");
             if (enableStep && !contiinue)
-            { 
+            {
+                ClearLine();
                 c.Write("Press any key to step... Press c to continue.");
                 if (c.ReadKey().KeyChar == 'c')
                     contiinue = true;
             }
-            if (enableStep && contiinue)
+            else if (enableStep && contiinue && breakInst is null)
+            {
+                ClearLine();
+                c.Write("Press any key to step... Press c to continue.");
+            }
+            else if (breakInst is not null && inst == breakInst)
+            {
+                ClearLine();
+                c.Write("Breakpoint hit. Press any key to step... Press c to continue. Press ` to edit breakpoint instruction.");
+                var read = c.ReadKey();
+                if (read.KeyChar == '`')
+                {
+                    enableStep = true;
+                    contiinue = false;
+                    ClearLine();
+                    c.Write("Enter a new breakpoint instruction: ");
+                    breakInst = c.ReadKey().KeyChar;
+                    ClearLine();
+                } else if (read.KeyChar != 'c')
+                {
+                    enableStep = true;
+                    contiinue = false;
+                }
+            }
+            else if (enableStep)
             {
                 ClearLine();
                 c.Write("Press any key to step... Press c to continue.");
             }
         }
 
-        private static void ClearLine()
+        public static void ClearLine()
         {
             int prev = c.CursorTop;
             c.SetCursorPosition(0, c.CursorTop);
@@ -87,7 +112,7 @@ namespace HellaFishy
             c.SetCursorPosition(0, prev);
         }
 
-        public static string Interpret(in char[][] codeBox, in string? inp, int delayMs, bool enableStep) // TODO: GUI?
+        public static string Interpret(in char[][] codeBox, in string? inp, int delayMs, bool enableStep, char? breakIns) // TODO: GUI?
         {
             // https://esolangs.org/wiki/Fish
 
@@ -106,7 +131,7 @@ namespace HellaFishy
 
             c.Clear();
             if (delayMs > 0)
-                Draw(codeBox, pointer, enableStep);
+                Draw(codeBox, pointer, ref enableStep, ins, ref breakIns);
 
             try
             {
@@ -376,12 +401,15 @@ namespace HellaFishy
                     pointer.y = pointer.d switch { '^' => pointer.y - 1, 'v' => pointer.y + 1, _ => pointer.y };
 
                     // translate the pointer in-bounds
-                    pointer.y = pointer.y < 0 ? codeBox.Length + pointer.y : pointer.y % codeBox.Length;
-                    pointer.x = pointer.x < 0 ? codeBox[0].Length + pointer.x : pointer.x % codeBox[0].Length;
+                    pointer.y = TranslateInBounds(pointer.y, codeBox.Length);
+                    pointer.x = TranslateInBounds(pointer.x, codeBox[0].Length);
 
                     if (delayMs > 0)
                     {
-                        Draw(codeBox, pointer, enableStep);
+                        char nIns = codeBox
+                            [TranslateInBounds(pointer.d switch { '^' => pointer.y - 1, 'v' => pointer.y + 1, _ => pointer.y }, codeBox.Length)]
+                            [TranslateInBounds(pointer.d switch { '<' => pointer.x - 1, '>' => pointer.x + 1, _ => pointer.x }, codeBox[0].Length)];
+                        Draw(codeBox, pointer, ref enableStep, nIns, ref breakIns);
                         Thread.Sleep(delayMs);
                     }
                 }
@@ -399,6 +427,9 @@ namespace HellaFishy
             // TODO:
             throw new NotImplementedException();
         }
+
+        static int TranslateInBounds(int component, int limit) => component < 0 ? limit + component : component % limit;
+
 
         static float PopGet()
         {
